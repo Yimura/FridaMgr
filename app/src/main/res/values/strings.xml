@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Frida Manager</string>
+
+    <string name="frida_server_state_label">Frida Server State: <b>%s</b></string>
+
+    <string name="btn_update_frida">Update Frida Server</string>
+    <string name="btn_kill_frida_server">Kill Server</string>
+
+    <string name="frida_state_unknown">Unknown</string>
+    <string name="frida_state_not_installed">Not Installed</string>
+    <string name="frida_state_stopped">Stopped</string>
+    <string name="frida_state_running">Running</string>
+    <string name="frida_state_updating">Updating</string>
+</resources>
