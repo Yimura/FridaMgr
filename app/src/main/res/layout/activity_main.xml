@@ -55,4 +55,14 @@
         app:layout_constraintVertical_bias="0.98"
         tools:visibility="visible" />
 
+    <TextView
+        android:id="@+id/dbg_architecture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="dbgFieldArchitecture"
+        app:layout_constraintBottom_toTopOf="@+id/btn_update_server"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/frida_server_state" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

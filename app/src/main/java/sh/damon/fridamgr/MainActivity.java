@@ -1,6 +1,8 @@
 package sh.damon.fridamgr;
 
+import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -38,5 +40,8 @@ public class MainActivity extends AppCompatActivity {
         btnKillServer.setOnClickListener((View v) -> {
             Toast.makeText(this, "Clicked kill server.", Toast.LENGTH_SHORT).show();
         });
+
+        TextView dbgArchitectureLbl = findViewById(R.id.dbg_architecture);
+        dbgArchitectureLbl.setText(TextUtils.join(", ", Build.SUPPORTED_ABIS));
     }
 }
