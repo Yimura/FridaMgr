@@ -42,27 +42,15 @@
         app:layout_constraintTop_toBottomOf="@+id/btn_update_server"
         app:layout_constraintVertical_bias="0.04000002" />
 
-    <ProgressBar
-        android:id="@+id/download_progress_bar"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="280dp"
-        android:layout_height="24dp"
-        android:maxHeight="24dip"
+    <TextView
+        android:id="@+id/frida_version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/frida_version"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_toggle_server"
-        app:layout_constraintVertical_bias="0.98"
-        tools:visibility="visible" />
-
-    <TextView
-        android:id="@+id/dbg_architecture"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="dbgFieldArchitecture"
-        app:layout_constraintBottom_toTopOf="@+id/btn_update_server"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/frida_server_state" />
+        app:layout_constraintVertical_bias="0.98" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

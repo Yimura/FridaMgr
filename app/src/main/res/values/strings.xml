@@ -13,4 +13,5 @@
     <string name="frida_state_stopped">Stopped</string>
     <string name="frida_state_running">Running</string>
     <string name="frida_state_updating">Updating</string>
+    <string name="frida_version">Frida Version: %s</string>
 </resources>

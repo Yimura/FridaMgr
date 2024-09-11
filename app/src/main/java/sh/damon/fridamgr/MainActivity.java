@@ -52,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
         TextView fridaStateLbl = findViewById(R.id.frida_server_state);
         fridaStateLbl.setText(String.format(getString(R.string.frida_server_state_label), getString(server.getStateStringId())));
 
+        TextView fridaVersionLbl = findViewById(R.id.frida_version);
+        fridaVersionLbl.setText(String.format(getString(R.string.frida_version), server.getVersion()));
+
         Button btnUpdateInstallFrida = findViewById(R.id.btn_update_server);
         btnUpdateInstallFrida.setText(R.string.btn_update_frida); // default, will be overridden if required in NOT_INSTALLED
 

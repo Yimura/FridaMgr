@@ -100,6 +100,10 @@ public class FridaServer {
         return R.string.frida_state_unknown;
     }
 
+    public String getVersion() {
+        return mVersion;
+    }
+
     public void setOnUpdateListener(UpdateCallback callback) {
         mCallback = callback;
     }
