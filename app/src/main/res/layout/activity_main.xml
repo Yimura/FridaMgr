@@ -32,7 +32,7 @@
         app:layout_constraintVertical_bias="0.07999998" />
 
     <Button
-        android:id="@+id/btn_kill_server"
+        android:id="@+id/btn_toggle_server"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/btn_kill_frida_server"
@@ -51,7 +51,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn_kill_server"
+        app:layout_constraintTop_toBottomOf="@+id/btn_toggle_server"
         app:layout_constraintVertical_bias="0.98"
         tools:visibility="visible" />
 

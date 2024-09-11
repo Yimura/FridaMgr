@@ -3,8 +3,10 @@
 
     <string name="frida_server_state_label">Frida Server State: <b>%s</b></string>
 
+    <string name="btn_install_frida">Install Frida Server</string>
     <string name="btn_update_frida">Update Frida Server</string>
     <string name="btn_kill_frida_server">Kill Server</string>
+    <string name="btn_start_frida_server">Start Server</string>
 
     <string name="frida_state_unknown">Unknown</string>
     <string name="frida_state_not_installed">Not Installed</string>
