@@ -9,8 +9,10 @@ activity = "1.9.2"
 constraintlayout = "2.1.4"
 gson = "2.11.0"
 xz = "1.10"
+okhttp = "4.12.0"
 
 [libraries]
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

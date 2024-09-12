@@ -21,7 +21,7 @@
         app:layout_constraintVertical_bias="0.139" />
 
     <Button
-        android:id="@+id/btn_update_server"
+        android:id="@+id/btn_install_update_server"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/btn_update_frida"
@@ -39,7 +39,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn_update_server"
+        app:layout_constraintTop_toBottomOf="@+id/btn_install_update_server"
         app:layout_constraintVertical_bias="0.04000002" />
 
     <TextView
@@ -52,5 +52,42 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_toggle_server"
         app:layout_constraintVertical_bias="0.98" />
+
+    <com.google.android.material.materialswitch.MaterialSwitch
+        android:id="@+id/switch_listen_on_network"
+        android:layout_width="260dp"
+        android:layout_height="48dp"
+        android:text="@string/listen_on_network_interface"
+        app:layout_constraintBottom_toTopOf="@+id/frida_version"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.50"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/switch_start_on_boot"
+        app:layout_constraintVertical_bias="0" />
+
+    <com.google.android.material.materialswitch.MaterialSwitch
+        android:id="@+id/switch_start_on_boot"
+        android:layout_width="260dp"
+        android:layout_height="48dp"
+        android:text="@string/start_on_boot"
+        app:layout_constraintBottom_toTopOf="@+id/frida_version"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_toggle_server"
+        app:layout_constraintVertical_bias="0.18" />
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/input_port_number"
+        android:layout_width="270dp"
+        android:layout_height="48dp"
+        android:hint="@string/port_number_hint"
+        android:inputType="number"
+        app:layout_constraintBottom_toTopOf="@+id/frida_version"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/switch_listen_on_network"
+        app:layout_constraintVertical_bias="0.0">
+
+    </com.google.android.material.textfield.TextInputEditText>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -11,8 +11,30 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.textfield.TextInputEditText;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 public class MainActivity extends AppCompatActivity {
+    final ExecutorService executorService =
+            new ThreadPoolExecutor(2, 4, 15_000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+
     FridaServer server;
+
+    Button btnUpdateInstallFrida;
+    Button btnServerStateSwitch;
+
+    TextView fridaStateLbl;
+    TextView fridaVersionLbl;
+
+    MaterialSwitch switchStartOnBoot;
+    MaterialSwitch switchListenOnNetwork;
+
+    TextInputEditText inputPortNumber;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,39 +49,45 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        server.setOnUpdateListener(this::updateElements);
+        fridaStateLbl = findViewById(R.id.frida_server_state);
+        fridaVersionLbl = findViewById(R.id.frida_version);
 
-        Button btnUpdateServer = findViewById(R.id.btn_update_server);
-        btnUpdateServer.setOnClickListener((View v) -> {
-            server.install();
+        btnUpdateInstallFrida = findViewById(R.id.btn_install_update_server);
+        btnUpdateInstallFrida.setOnClickListener((View v) -> {
+            if (server.getState() == FridaServer.State.NOT_INSTALLED) {
+                executorService.execute(server::install);
+            }
+            else {
+                executorService.execute(server::update);
+            }
         });
 
-        Button btnServerStateSwitch = findViewById(R.id.btn_toggle_server);
+        btnServerStateSwitch = findViewById(R.id.btn_toggle_server);
         btnServerStateSwitch.setOnClickListener((View v) -> {
             final FridaServer.State state = server.getState();
             if (state == FridaServer.State.RUNNING) {
-                server.kill();
+                executorService.execute(server::kill);
             }
             else if (state == FridaServer.State.STOPPED) {
-                server.start();
+                executorService.execute(server::start);
             }
         });
 
+        switchStartOnBoot = findViewById(R.id.switch_start_on_boot);
+        switchListenOnNetwork = findViewById(R.id.switch_listen_on_network);
+        inputPortNumber = findViewById(R.id.input_port_number);
+
+        server.setOnUpdateListener(() -> runOnUiThread(this::updateElements));
         updateElements();
     }
 
     private void updateElements() {
-        TextView fridaStateLbl = findViewById(R.id.frida_server_state);
         fridaStateLbl.setText(String.format(getString(R.string.frida_server_state_label), getString(server.getStateStringId())));
-
-        TextView fridaVersionLbl = findViewById(R.id.frida_version);
         fridaVersionLbl.setText(String.format(getString(R.string.frida_version), server.getVersion()));
 
-        Button btnUpdateInstallFrida = findViewById(R.id.btn_update_server);
-        btnUpdateInstallFrida.setText(R.string.btn_update_frida); // default, will be overridden if required in NOT_INSTALLED
-
-        Button btnServerStateSwitch = findViewById(R.id.btn_toggle_server);
+        btnUpdateInstallFrida.setEnabled(true);
         btnServerStateSwitch.setEnabled(true);
+        btnUpdateInstallFrida.setText(R.string.btn_update_frida);
 
         switch (server.getState()) {
             case RUNNING: {
@@ -77,6 +105,10 @@ public class MainActivity extends AppCompatActivity {
                 btnUpdateInstallFrida.setText(R.string.btn_install_frida);
 
                 break;
+            }
+            case UPDATING: {
+                btnUpdateInstallFrida.setEnabled(false);
+                btnUpdateInstallFrida.setText(String.format(getString(R.string.btn_download_progress), server.getDownloadState().getProgress()));
             }
         }
     }

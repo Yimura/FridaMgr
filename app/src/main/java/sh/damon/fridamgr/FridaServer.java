@@ -14,8 +14,37 @@ import sh.damon.fridamgr.util.Curl;
 import sh.damon.fridamgr.util.ShellUtil;
 
 public class FridaServer {
-    public interface UpdateCallback {
+    public interface FridaServerCallback {
         void call();
+    }
+
+    public static class DownloadState {
+        FridaServerCallback callback = null;
+        int progress = 0;
+
+        int getProgress() {
+            return progress;
+        }
+
+        void reset () {
+            progress = 0;
+
+            if (callback != null) {
+                callback.call();
+            }
+        }
+
+        void setProgress(int newProgress) {
+            progress = newProgress;
+
+            if (callback != null) {
+                callback.call();
+            }
+        }
+
+        void setProgressListener(FridaServerCallback cb) {
+            callback = cb;
+        }
     }
 
     public enum State {
@@ -32,10 +61,11 @@ public class FridaServer {
     private final File mBinary;
     private String mVersion;
 
-    private UpdateCallback mCallback = null;
+    private FridaServerCallback mCallback = null;
+    private final DownloadState mDownloadState = new DownloadState();
     private State mState = State.UNKNOWN;
 
-    FridaServer(File baseDir) {
+    public FridaServer(File baseDir) {
         mName = "frida-server";
         mBinary = new File(baseDir, mName);
 
@@ -43,43 +73,70 @@ public class FridaServer {
     }
 
     public boolean install() {
-        final Release release = repo.getLatestRelease();
-        ReleaseAsset toDownload = null;
+        try {
+            mDownloadState.reset();
+            mState = State.UPDATING;
 
-        final String architecture = Architecture.getString();
-        Pattern regexp = Pattern.compile(String.format("frida-server-\\d+[.]\\d+[.]\\d+-android-%s[.]xz", architecture));
-        for (ReleaseAsset asset : release.assets) {
-            Matcher matcher = regexp.matcher(asset.name);
-            if (matcher.find()) {
-                toDownload = asset;
-
-                break;
+            final Release release = repo.getLatestRelease();
+            if (release == null) {
+                return false;
             }
+            mDownloadState.setProgress(20);
+
+            ReleaseAsset toDownload = null;
+
+            final String architecture = Architecture.getString();
+            Pattern regexp = Pattern.compile(String.format("frida-server-\\d+[.]\\d+[.]\\d+-android-%s[.]xz", architecture));
+            for (ReleaseAsset asset : release.assets) {
+                Matcher matcher = regexp.matcher(asset.name);
+                if (matcher.find()) {
+                    toDownload = asset;
+
+                    break;
+                }
+            }
+            if (toDownload == null) {
+                Log.e("FridaServer", "Failed to find an appropriate Frida Server binary.");
+                return false;
+            }
+            mDownloadState.setProgress(40);
+
+            final File archive = new File(mBinary + ".xz");
+            if (!Curl.download(toDownload.browser_download_url, archive)) {
+                Log.e("FridaServer", "Failed to download Frida Server from Github.");
+                return false;
+            }
+            mDownloadState.setProgress(60);
+
+            if (!Archive.decompress(archive, mBinary)) {
+                Log.e("FridaServer", "Failed to decompress Frida Server archive.");
+                return false;
+            }
+            mDownloadState.setProgress(80);
+
+            if (!archive.delete()) {
+                Log.w("FridaServer", "Failed to remove Frida Server archive file.");
+            }
+            return ShellUtil.runAsSuperuser(String.format("chmod +x %s", mBinary)).isSuccess();
+        }
+        finally {
+            mDownloadState.setProgress(100);
+
+            updateState();
+        }
+    }
+
+    public void update() {
+        boolean isRunning = mState == State.RUNNING;
+        if (isRunning) {
+            kill();
         }
 
-        if (toDownload == null) {
-            Log.e("FridaServer", "Failed to find an appropriate Frida Server binary.");
-            return false;
-        }
+        install();
 
-        final File archive = new File(mBinary + ".xz");
-        if (!Curl.download(toDownload.browser_download_url, archive)) {
-            Log.e("FridaServer", "Failed to download Frida Server from Github.");
-            return false;
+        if (isRunning) {
+            start();
         }
-
-        if (!Archive.decompress(archive, mBinary)) {
-            Log.e("FridaServer", "Failed to decompress Frida Server archive.");
-            return false;
-        }
-
-        if (!archive.delete()) {
-            Log.w("FridaServer", "Failed to remove Frida Server archive file.");
-        }
-
-        boolean status = ShellUtil.runAsSuperuser(String.format("chmod +x %s", mBinary)).isSuccess();
-        updateState();
-        return status;
     }
 
     public boolean kill() {
@@ -90,10 +147,17 @@ public class FridaServer {
     }
 
     public boolean start() {
+        if (mState == State.NOT_INSTALLED)
+            return false;
+
         final ShellUtil.ProcessResponse res = ShellUtil.runAsSuperuser(String.format("%s -D", mBinary));
 
         updateState();
         return res.isSuccess();
+    }
+
+    public DownloadState getDownloadState() {
+        return mDownloadState;
     }
 
     public State getState() {
@@ -119,8 +183,10 @@ public class FridaServer {
         return mVersion;
     }
 
-    public void setOnUpdateListener(UpdateCallback callback) {
+    public void setOnUpdateListener(FridaServerCallback callback) {
         mCallback = callback;
+
+        mDownloadState.setProgressListener(callback);
     }
 
     public void updateState() {
