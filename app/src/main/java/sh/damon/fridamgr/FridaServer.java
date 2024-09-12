@@ -3,6 +3,7 @@ package sh.damon.fridamgr;
 import android.util.Log;
 
 import java.io.File;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,6 +48,22 @@ public class FridaServer {
         }
     }
 
+    private static class FridaArguments {
+        private String listenAddress = null;
+
+        private Optional<String> getListenAddress() {
+            return Optional.ofNullable(listenAddress);
+        }
+
+        private void setPortNumber(int number) {
+            listenAddress = "0.0.0.0:" + number;
+        }
+
+        private void resetListenAddress() {
+            listenAddress = null;
+        }
+    }
+
     public enum State {
         UNKNOWN,
         NOT_INSTALLED,
@@ -59,6 +76,7 @@ public class FridaServer {
 
     private final String mName;
     private final File mBinary;
+    private final FridaArguments mArgs = new FridaArguments();
     private String mVersion;
 
     private FridaServerCallback mCallback = null;
@@ -139,6 +157,10 @@ public class FridaServer {
         }
     }
 
+    public boolean restart() {
+        return kill() && start();
+    }
+
     public boolean kill() {
         final ShellUtil.ProcessResponse res =
                 ShellUtil.runAsSuperuser(String.format("pkill -15 %s; while pgrep %s 1>/dev/null; do sleep 0.1; done", mName, mName));
@@ -150,7 +172,16 @@ public class FridaServer {
         if (mState == State.NOT_INSTALLED)
             return false;
 
-        final ShellUtil.ProcessResponse res = ShellUtil.runAsSuperuser(String.format("%s -D", mBinary));
+        final StringBuilder cmdStr = new StringBuilder()
+                .append(mBinary)
+                .append(" -D");
+
+        Optional<String> listenAddress;
+        if ((listenAddress = mArgs.getListenAddress()).isPresent()) {
+            cmdStr.append(" -l ").append(listenAddress);
+        }
+
+        final ShellUtil.ProcessResponse res = ShellUtil.runAsSuperuser(cmdStr.toString());
 
         updateState();
         return res.isSuccess();
@@ -189,8 +220,24 @@ public class FridaServer {
         mDownloadState.setProgressListener(callback);
     }
 
+    public void toggleListenPort(boolean toggle, int port) {
+        if (port < 1_000 || port > 65_535) {
+            Log.e("FridaServer", "Invalid port range given.");
+            return;
+        }
+
+        mArgs.resetListenAddress();
+        if (toggle) {
+            mArgs.setPortNumber(port);
+        }
+
+        if (mState == State.RUNNING) {
+            restart();
+        }
+    }
+
     public void updateState() {
-        Runnable r = () -> {
+        try {
             if (ShellUtil.runAsSuperuser(String.format("test -e %s", mBinary)).isFail()) {
                 mState = State.NOT_INSTALLED;
 
@@ -200,18 +247,17 @@ public class FridaServer {
             mVersion = ShellUtil.runAsSuperuser(String.format("%s --version", mBinary)).out;
 
             final ShellUtil.ProcessResponse res = ShellUtil.runAsSuperuser(String.format("pgrep %s", mName));
-            if (res.isFail())
-            {
+            if (res.isFail()) {
                 mState = State.STOPPED;
             }
             else {
                 mState = State.RUNNING;
             }
-        };
-        r.run();
-
-        if (mCallback != null) {
-            mCallback.call();
+        }
+        finally {
+            if (mCallback != null) {
+                mCallback.call();
+            }
         }
     }
 }

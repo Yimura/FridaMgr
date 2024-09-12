@@ -1,8 +1,12 @@
 package sh.damon.fridamgr;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.InputFilter;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -14,15 +18,20 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import sh.damon.fridamgr.filter.Uint16Filter;
+
 public class MainActivity extends AppCompatActivity {
     final ExecutorService executorService =
             new ThreadPoolExecutor(2, 4, 15_000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
 
+    SharedPreferences prefs;
+    SharedPreferences.Editor prefEdit;
     FridaServer server;
 
     Button btnUpdateInstallFrida;
@@ -38,6 +47,10 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        prefs = getSharedPreferences("fridaMgr", Context.MODE_PRIVATE);
+        prefEdit = prefs.edit();
+        prefEdit.clear();
+
         server = new FridaServer(getFilesDir());
 
         super.onCreate(savedInstanceState);
@@ -76,9 +89,61 @@ public class MainActivity extends AppCompatActivity {
         switchStartOnBoot = findViewById(R.id.switch_start_on_boot);
         switchListenOnNetwork = findViewById(R.id.switch_listen_on_network);
         inputPortNumber = findViewById(R.id.input_port_number);
+        inputPortNumber.setFilters(new InputFilter[]{
+                new Uint16Filter()
+        });
 
-        server.setOnUpdateListener(() -> runOnUiThread(this::updateElements));
+        switchStartOnBoot.setOnCheckedChangeListener((CompoundButton view, boolean startOnBoot) -> {
+            prefEdit.putBoolean(Preference.START_ON_BOOT, startOnBoot);
+        });
+
+        switchListenOnNetwork.setOnCheckedChangeListener((CompoundButton view, boolean listenOnNetwork) -> {
+            prefEdit.putBoolean(Preference.LISTEN_ON_NETWORK, listenOnNetwork);
+
+            inputPortNumber.setVisibility(listenOnNetwork ? View.VISIBLE : View.INVISIBLE);
+        });
+
+        inputPortNumber.setOnFocusChangeListener((View v, boolean hasFocus) -> {
+            if (!hasFocus) {
+                int portNumber = Integer.parseInt(String.valueOf(inputPortNumber.getText()));
+                executorService.execute(() -> {
+                    server.toggleListenPort(switchListenOnNetwork.isEnabled(), portNumber);
+                });
+
+                prefEdit.putInt(Preference.PORT_NUMBER, portNumber);
+            }
+        });
+
+        loadValuesFromSharedPrefs();
+        registerEventListeners();
         updateElements();
+    }
+
+    private void loadValuesFromSharedPrefs() {
+        switchStartOnBoot.setActivated(prefs.getBoolean(Preference.START_ON_BOOT, false));
+
+        final boolean listenOnNetwork = prefs.getBoolean(Preference.LISTEN_ON_NETWORK, false);
+        switchListenOnNetwork.setActivated(listenOnNetwork);
+        inputPortNumber.setVisibility(listenOnNetwork ? View.VISIBLE : View.INVISIBLE);
+
+        int portNumber = prefs.getInt(Preference.PORT_NUMBER, 27055);
+        if (portNumber < 1000 || portNumber > 65535) {
+            // random between 20k and 40k
+            portNumber = (new Random()).nextInt(20_001) + 20_000;
+            prefEdit.putInt(Preference.PORT_NUMBER, portNumber);
+        }
+        inputPortNumber.setText(String.valueOf(portNumber));
+        server.toggleListenPort(listenOnNetwork, portNumber);
+    }
+
+    private void onSharedPreferenceChange(SharedPreferences pref, String key) {
+        executorService.execute(prefEdit::commit);
+    }
+
+    private void registerEventListeners() {
+        server.setOnUpdateListener(() -> runOnUiThread(this::updateElements));
+
+        prefs.registerOnSharedPreferenceChangeListener(this::onSharedPreferenceChange);
     }
 
     private void updateElements() {
