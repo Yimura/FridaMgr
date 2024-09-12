@@ -1,4 +1,4 @@
-package sh.damon.fridamgr;
+package sh.damon.fridamgr.util;
 
 import android.util.Log;
 

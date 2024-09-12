@@ -1,11 +1,17 @@
 package sh.damon.fridamgr;
 
+import android.util.Log;
+
 import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import sh.damon.fridamgr.models.github.Release;
 import sh.damon.fridamgr.models.github.ReleaseAsset;
+import sh.damon.fridamgr.util.Architecture;
+import sh.damon.fridamgr.util.Archive;
+import sh.damon.fridamgr.util.Curl;
+import sh.damon.fridamgr.util.ShellUtil;
 
 public class FridaServer {
     public interface UpdateCallback {
@@ -40,7 +46,8 @@ public class FridaServer {
         final Release release = repo.getLatestRelease();
         ReleaseAsset toDownload = null;
 
-        Pattern regexp = Pattern.compile("frida-server-\\d+[.]\\d+[.]\\d+-android-arm64[.]xz");
+        final String architecture = Architecture.getString();
+        Pattern regexp = Pattern.compile(String.format("frida-server-\\d+[.]\\d+[.]\\d+-android-%s[.]xz", architecture));
         for (ReleaseAsset asset : release.assets) {
             Matcher matcher = regexp.matcher(asset.name);
             if (matcher.find()) {
@@ -51,15 +58,23 @@ public class FridaServer {
         }
 
         if (toDownload == null) {
+            Log.e("FridaServer", "Failed to find an appropriate Frida Server binary.");
             return false;
         }
 
-        if (!Curl.download(toDownload.browser_download_url, new File(mBinary + ".xz"))) {
+        final File archive = new File(mBinary + ".xz");
+        if (!Curl.download(toDownload.browser_download_url, archive)) {
+            Log.e("FridaServer", "Failed to download Frida Server from Github.");
             return false;
         }
 
-        if (ShellUtil.runAsSuperuser(String.format("busybox xz -fd %s", mBinary + ".xz")).isFail()) {
+        if (!Archive.decompress(archive, mBinary)) {
+            Log.e("FridaServer", "Failed to decompress Frida Server archive.");
             return false;
+        }
+
+        if (!archive.delete()) {
+            Log.w("FridaServer", "Failed to remove Frida Server archive file.");
         }
 
         boolean status = ShellUtil.runAsSuperuser(String.format("chmod +x %s", mBinary)).isSuccess();
