@@ -1,7 +1,5 @@
 package sh.damon.fridamgr;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputFilter;
 import android.view.View;
@@ -18,6 +16,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.io.File;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -25,13 +24,13 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import sh.damon.fridamgr.filter.Uint16Filter;
+import sh.damon.fridamgr.preferences.Preferences;
+import sh.damon.fridamgr.preferences.UserPreferences;
 
 public class MainActivity extends AppCompatActivity {
     final ExecutorService executorService =
             new ThreadPoolExecutor(2, 4, 15_000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
 
-    SharedPreferences prefs;
-    SharedPreferences.Editor prefEdit;
     FridaServer server;
 
     Button btnUpdateInstallFrida;
@@ -47,9 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        prefs = getSharedPreferences("fridaMgr", Context.MODE_PRIVATE);
-        prefEdit = prefs.edit();
-        prefEdit.clear();
+        UserPreferences.load(new File(getFilesDir(), "fridaMgr.json"));
 
         server = new FridaServer(getFilesDir());
 
@@ -93,12 +90,10 @@ public class MainActivity extends AppCompatActivity {
                 new Uint16Filter()
         });
 
-        switchStartOnBoot.setOnCheckedChangeListener((CompoundButton view, boolean startOnBoot) -> {
-            prefEdit.putBoolean(Preference.START_ON_BOOT, startOnBoot);
-        });
+        switchStartOnBoot.setOnCheckedChangeListener((CompoundButton view, boolean startOnBoot) -> UserPreferences.set(Preferences.START_ON_BOOT, startOnBoot));
 
         switchListenOnNetwork.setOnCheckedChangeListener((CompoundButton view, boolean listenOnNetwork) -> {
-            prefEdit.putBoolean(Preference.LISTEN_ON_NETWORK, listenOnNetwork);
+            UserPreferences.set(Preferences.LISTEN_ON_NETWORK, listenOnNetwork);
 
             inputPortNumber.setVisibility(listenOnNetwork ? View.VISIBLE : View.INVISIBLE);
         });
@@ -106,44 +101,43 @@ public class MainActivity extends AppCompatActivity {
         inputPortNumber.setOnFocusChangeListener((View v, boolean hasFocus) -> {
             if (!hasFocus) {
                 int portNumber = Integer.parseInt(String.valueOf(inputPortNumber.getText()));
-                executorService.execute(() -> {
-                    server.toggleListenPort(switchListenOnNetwork.isEnabled(), portNumber);
-                });
+                executorService.execute(() -> server.toggleListenPort(switchListenOnNetwork.isEnabled(), portNumber));
 
-                prefEdit.putInt(Preference.PORT_NUMBER, portNumber);
+                UserPreferences.set(Preferences.PORT_NUMBER, portNumber);
             }
         });
 
-        loadValuesFromSharedPrefs();
+        loadUserPreferences();
         registerEventListeners();
         updateElements();
     }
 
-    private void loadValuesFromSharedPrefs() {
-        switchStartOnBoot.setActivated(prefs.getBoolean(Preference.START_ON_BOOT, false));
+    private void loadUserPreferences() {
+        final boolean startOnBoot = UserPreferences.get(Preferences.START_ON_BOOT, false);
+        switchStartOnBoot.setChecked(startOnBoot);
 
-        final boolean listenOnNetwork = prefs.getBoolean(Preference.LISTEN_ON_NETWORK, false);
-        switchListenOnNetwork.setActivated(listenOnNetwork);
+        final boolean listenOnNetwork = UserPreferences.get(Preferences.LISTEN_ON_NETWORK, false);
+        switchListenOnNetwork.setChecked(listenOnNetwork);
         inputPortNumber.setVisibility(listenOnNetwork ? View.VISIBLE : View.INVISIBLE);
 
-        int portNumber = prefs.getInt(Preference.PORT_NUMBER, 27055);
+        int portNumber = UserPreferences.get(Preferences.PORT_NUMBER, 27055);
         if (portNumber < 1000 || portNumber > 65535) {
             // random between 20k and 40k
             portNumber = (new Random()).nextInt(20_001) + 20_000;
-            prefEdit.putInt(Preference.PORT_NUMBER, portNumber);
+            UserPreferences.set(Preferences.PORT_NUMBER, portNumber);
         }
         inputPortNumber.setText(String.valueOf(portNumber));
         server.toggleListenPort(listenOnNetwork, portNumber);
     }
 
-    private void onSharedPreferenceChange(SharedPreferences pref, String key) {
-        executorService.execute(prefEdit::commit);
+    private void onSharedPreferenceChange(UserPreferences prefs, String key) {
+        executorService.execute(UserPreferences::save);
     }
 
     private void registerEventListeners() {
         server.setOnUpdateListener(() -> runOnUiThread(this::updateElements));
 
-        prefs.registerOnSharedPreferenceChangeListener(this::onSharedPreferenceChange);
+        UserPreferences.setOnPrefChangeCallback(this::onSharedPreferenceChange);
     }
 
     private void updateElements() {
@@ -171,6 +165,11 @@ public class MainActivity extends AppCompatActivity {
 
                 break;
             }
+            case STARTING:
+            case STOPPING:
+                btnServerStateSwitch.setEnabled(false);
+
+                break;
             case UPDATING: {
                 btnUpdateInstallFrida.setEnabled(false);
                 btnUpdateInstallFrida.setText(String.format(getString(R.string.btn_download_progress), server.getDownloadState().getProgress()));
