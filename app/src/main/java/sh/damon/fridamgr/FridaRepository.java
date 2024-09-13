@@ -5,7 +5,7 @@ import android.util.Log;
 import java.io.IOException;
 
 import sh.damon.fridamgr.models.github.Release;
-import sh.damon.fridamgr.util.HttpClient;
+import sh.damon.fridamgr.http.HttpClient;
 
 public class FridaRepository {
     private final String mContext = "frida/frida";

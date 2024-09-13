@@ -3,15 +3,16 @@ package sh.damon.fridamgr;
 import android.util.Log;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import sh.damon.fridamgr.http.HttpClient;
 import sh.damon.fridamgr.models.github.Release;
 import sh.damon.fridamgr.models.github.ReleaseAsset;
 import sh.damon.fridamgr.util.Architecture;
 import sh.damon.fridamgr.util.Archive;
-import sh.damon.fridamgr.util.Curl;
 import sh.damon.fridamgr.util.ShellUtil;
 
 public class FridaServer {
@@ -100,7 +101,6 @@ public class FridaServer {
             if (release == null) {
                 return false;
             }
-            mDownloadState.setProgress(20);
 
             ReleaseAsset toDownload = null;
 
@@ -118,14 +118,15 @@ public class FridaServer {
                 Log.e("FridaServer", "Failed to find an appropriate Frida Server binary.");
                 return false;
             }
-            mDownloadState.setProgress(40);
 
             final File archive = new File(mBinary + ".xz");
-            if (!Curl.download(toDownload.browser_download_url, archive)) { // TODO: replace Curl.download with OkHttp equivalent.
+            if (!HttpClient.download(
+                    toDownload.browser_download_url,
+                    archive,
+                    (bytesRead, total, done) -> mDownloadState.setProgress(Math.round(((float)bytesRead / total) * 50)))) {
                 Log.e("FridaServer", "Failed to download Frida Server from Github.");
                 return false;
             }
-            mDownloadState.setProgress(60);
 
             if (!Archive.decompress(archive, mBinary)) {
                 Log.e("FridaServer", "Failed to decompress Frida Server archive.");
@@ -137,8 +138,9 @@ public class FridaServer {
                 Log.w("FridaServer", "Failed to remove Frida Server archive file.");
             }
             return ShellUtil.runAsSuperuser(String.format("chmod +x %s", mBinary)).isSuccess();
-        }
-        finally {
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
             mDownloadState.setProgress(100);
 
             updateState();
