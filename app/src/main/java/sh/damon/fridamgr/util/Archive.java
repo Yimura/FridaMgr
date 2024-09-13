@@ -8,6 +8,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import org.tukaani.xz.SeekableFileInputStream;
+import org.tukaani.xz.SeekableXZInputStream;
 import org.tukaani.xz.XZInputStream;
 
 import sh.damon.fridamgr.listener.ProgressListener;
@@ -19,12 +21,12 @@ public class Archive {
         }
 
         try {
-            final BufferedInputStream buffStream = new BufferedInputStream(Files.newInputStream(input.toPath()));
-            final XZInputStream in = new XZInputStream(buffStream);
+            final SeekableFileInputStream seekableFileInputStream = new SeekableFileInputStream(input);
+            final SeekableXZInputStream in = new SeekableXZInputStream(seekableFileInputStream);
 
             final FileOutputStream out = new FileOutputStream(output);
 
-            long contentLength = Files.size(input.toPath());
+            long contentLength = in.length();
             long totalBytesRead = 0;
             final byte[] buffer = new byte[8 * 1024];
             for (int bytesRead; -1 != (bytesRead = in.read(buffer)); ) {
