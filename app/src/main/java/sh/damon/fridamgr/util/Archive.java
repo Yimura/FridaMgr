@@ -10,19 +10,28 @@ import java.nio.file.Files;
 
 import org.tukaani.xz.XZInputStream;
 
+import sh.damon.fridamgr.listener.ProgressListener;
+
 public class Archive {
-    public static boolean decompress(File input, File output) {
+    public static boolean decompress(File input, File output, ProgressListener listener) {
         if (!input.exists()) {
             return false;
         }
 
         try {
-            final XZInputStream in = new XZInputStream(new BufferedInputStream(Files.newInputStream(input.toPath())));
+            final BufferedInputStream buffStream = new BufferedInputStream(Files.newInputStream(input.toPath()));
+            final XZInputStream in = new XZInputStream(buffStream);
+
             final FileOutputStream out = new FileOutputStream(output);
 
-            final byte[] buffer = new byte[8192];
-            for (int n; -1 != (n = in.read(buffer)); ) {
-                out.write(buffer, 0, n);
+            long contentLength = Files.size(input.toPath());
+            long totalBytesRead = 0;
+            final byte[] buffer = new byte[8 * 1024];
+            for (int bytesRead; -1 != (bytesRead = in.read(buffer)); ) {
+                out.write(buffer, 0, bytesRead);
+
+                totalBytesRead += bytesRead;
+                listener.update(totalBytesRead, contentLength, false);
             }
             out.close();
             in.close();

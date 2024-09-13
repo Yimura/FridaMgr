@@ -128,11 +128,10 @@ public class FridaServer {
                 return false;
             }
 
-            if (!Archive.decompress(archive, mBinary)) {
+            if (!Archive.decompress(archive, mBinary, (bytesRead, total, done) -> mDownloadState.setProgress(50 + Math.round(((float)bytesRead / total) * 50)))) {
                 Log.e("FridaServer", "Failed to decompress Frida Server archive.");
                 return false;
             }
-            mDownloadState.setProgress(80);
 
             if (!archive.delete()) {
                 Log.w("FridaServer", "Failed to remove Frida Server archive file.");
