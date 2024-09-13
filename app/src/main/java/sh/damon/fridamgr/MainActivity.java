@@ -1,8 +1,12 @@
 package sh.damon.fridamgr;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.text.InputFilter;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.TextView;
@@ -96,15 +100,26 @@ public class MainActivity extends AppCompatActivity {
             UserPreferences.set(Preferences.LISTEN_ON_NETWORK, listenOnNetwork);
 
             inputPortNumber.setVisibility(listenOnNetwork ? View.VISIBLE : View.INVISIBLE);
+
+            int portNumber = UserPreferences.get(Preferences.PORT_NUMBER, 27055);
+            executorService.execute(() -> server.toggleListenPort(listenOnNetwork, portNumber));
         });
 
-        inputPortNumber.setOnFocusChangeListener((View v, boolean hasFocus) -> {
-            if (!hasFocus) {
+        inputPortNumber.setOnEditorActionListener((TextView v, int actionId, KeyEvent event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
                 int portNumber = Integer.parseInt(String.valueOf(inputPortNumber.getText()));
-                executorService.execute(() -> server.toggleListenPort(switchListenOnNetwork.isEnabled(), portNumber));
+                if (portNumber > 1000 && portNumber < 65_535) {
+                    executorService.execute(() -> server.toggleListenPort(switchListenOnNetwork.isEnabled(), portNumber));
 
-                UserPreferences.set(Preferences.PORT_NUMBER, portNumber);
+                    UserPreferences.set(Preferences.PORT_NUMBER, portNumber);
+                }
+                inputPortNumber.clearFocus();
+                final InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(inputPortNumber.getWindowToken(), 0);
+
+                return true;
             }
+            return false;
         });
 
         loadUserPreferences();
