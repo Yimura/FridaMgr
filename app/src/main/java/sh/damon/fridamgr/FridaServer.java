@@ -69,7 +69,8 @@ public class FridaServer {
         NOT_INSTALLED,
         STOPPED,
         RUNNING,
-        UPDATING
+        UPDATING,
+        STARTING, STOPPING
     }
 
     private final FridaRepository repo = new FridaRepository();
@@ -120,7 +121,7 @@ public class FridaServer {
             mDownloadState.setProgress(40);
 
             final File archive = new File(mBinary + ".xz");
-            if (!Curl.download(toDownload.browser_download_url, archive)) {
+            if (!Curl.download(toDownload.browser_download_url, archive)) { // TODO: replace Curl.download with OkHttp equivalent.
                 Log.e("FridaServer", "Failed to download Frida Server from Github.");
                 return false;
             }
@@ -162,6 +163,10 @@ public class FridaServer {
     }
 
     public boolean kill() {
+        mState = State.STOPPING;
+        if (mCallback != null)
+            mCallback.call();
+
         final ShellUtil.ProcessResponse res =
                 ShellUtil.runAsSuperuser(String.format("pkill -15 %s; while pgrep %s 1>/dev/null; do sleep 0.1; done", mName, mName));
         updateState();
@@ -171,6 +176,9 @@ public class FridaServer {
     public boolean start() {
         if (mState == State.NOT_INSTALLED)
             return false;
+        mState = State.STARTING;
+        if (mCallback != null)
+            mCallback.call();
 
         final StringBuilder cmdStr = new StringBuilder()
                 .append(mBinary)
@@ -178,7 +186,7 @@ public class FridaServer {
 
         Optional<String> listenAddress;
         if ((listenAddress = mArgs.getListenAddress()).isPresent()) {
-            cmdStr.append(" -l ").append(listenAddress);
+            cmdStr.append(" -l ").append(listenAddress.get());
         }
 
         final ShellUtil.ProcessResponse res = ShellUtil.runAsSuperuser(cmdStr.toString());
@@ -205,6 +213,10 @@ public class FridaServer {
                 return R.string.frida_state_running;
             case UPDATING:
                 return R.string.frida_state_updating;
+            case STARTING:
+                return R.string.frida_state_starting;
+            case STOPPING:
+                return R.string.frida_state_stopping;
         }
 
         return R.string.frida_state_unknown;
