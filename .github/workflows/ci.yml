@@ -35,7 +35,8 @@ jobs:
 
         run: |
           echo $ENCODED_STRING > keystore-b64.txt
-          base64 -d keystore-b64.txt > keystore.jks
+          mkdir -p keystore
+          base64 -d keystore-b64.txt > keystore/keystore.jks
 
       - name: Ensure gradlew execute flags
         run: |
