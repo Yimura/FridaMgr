@@ -4,6 +4,8 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -81,13 +83,14 @@ public class FridaServer {
     private final FridaArguments mArgs = new FridaArguments();
     private String mVersion;
 
-    private FridaServerCallback mCallback = null;
+    private Collection<FridaServerCallback> mCallbacks = null;
     private final DownloadState mDownloadState = new DownloadState();
     private State mState = State.UNKNOWN;
 
     public FridaServer(File baseDir) {
         mName = "frida-server";
         mBinary = new File(baseDir, mName);
+        mCallbacks = new LinkedList<>();
 
         updateState();
     }
@@ -165,8 +168,7 @@ public class FridaServer {
 
     public boolean kill() {
         mState = State.STOPPING;
-        if (mCallback != null)
-            mCallback.call();
+        emit();
 
         final ShellUtil.ProcessResponse res =
                 ShellUtil.runAsSuperuser(String.format("pkill -15 %s; while pgrep %s 1>/dev/null; do sleep 0.1; done", mName, mName));
@@ -178,8 +180,7 @@ public class FridaServer {
         if (mState == State.NOT_INSTALLED)
             return false;
         mState = State.STARTING;
-        if (mCallback != null)
-            mCallback.call();
+        emit();
 
         final StringBuilder cmdStr = new StringBuilder()
                 .append(mBinary)
@@ -227,10 +228,14 @@ public class FridaServer {
         return mVersion;
     }
 
-    public void setOnUpdateListener(FridaServerCallback callback) {
-        mCallback = callback;
+    public void registerEventListener(FridaServerCallback callback) {
+        mCallbacks.add(callback);
 
-        mDownloadState.setProgressListener(callback);
+        mDownloadState.setProgressListener(this::emit);
+    }
+
+    public void unregisterEventListener(FridaServerCallback callback) {
+        mCallbacks.remove(callback);
     }
 
     public void toggleListenPort(boolean toggle, int port) {
@@ -246,6 +251,12 @@ public class FridaServer {
 
         if (mState == State.RUNNING) {
             restart();
+        }
+    }
+
+    public void emit() {
+        for (FridaServerCallback callback : mCallbacks) {
+            callback.call();
         }
     }
 
@@ -268,9 +279,25 @@ public class FridaServer {
             }
         }
         finally {
-            if (mCallback != null) {
-                mCallback.call();
-            }
+            emit();
         }
+    }
+
+
+    private static FridaServer instance = null;
+    public static FridaServer init(File baseDir) {
+        if (instance != null) {
+            Log.v("FridaServer", "Already instantiated.");
+            return instance;
+        }
+
+        return instance = new FridaServer(baseDir);
+    }
+
+    public static FridaServer getInstance() {
+        if (instance == null) {
+            throw new RuntimeException("Please instantiated FridaServer before calling getInstance.");
+        }
+        return instance;
     }
 }

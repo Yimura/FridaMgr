@@ -5,7 +5,7 @@
 
     <string name="btn_install_frida">Install Frida Server</string>
     <string name="btn_update_frida">Update Frida Server</string>
-    <string name="btn_download_progress">Downloading %d%%</string>
+    <string name="btn_install_progress">Installing %d%%</string>
 
     <string name="btn_kill_frida_server">Kill Server</string>
     <string name="btn_start_frida_server">Start Server</string>
@@ -17,8 +17,12 @@
     <string name="frida_state_updating">Updating</string>
     <string name="frida_state_stopping">Stopping</string>
     <string name="frida_state_starting">Starting</string>
+
     <string name="frida_version">Frida Version: %s</string>
+
     <string name="start_on_boot">Start On Boot</string>
     <string name="listen_on_network_interface">Listen on Network Interface</string>
     <string name="port_number_hint">Port Number</string>
+
+    <string name="tile_toggle_server">Toggle Frida</string>
 </resources>

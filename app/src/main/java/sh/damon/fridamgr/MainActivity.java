@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         UserPreferences.load(new File(getFilesDir(), "fridaMgr.json"));
 
-        server = new FridaServer(getFilesDir());
+        server = FridaServer.init(getFilesDir());
 
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
@@ -127,6 +127,28 @@ public class MainActivity extends AppCompatActivity {
         updateElements();
     }
 
+//    @Override
+//    protected void onPause() {
+//        super.onPause();
+//
+//        server.unregisterEventListener(this::updateElementsWrapper);
+//    }
+//
+//    @Override
+//    protected void onResume() {
+//        super.onResume();
+//
+//        server.registerEventListener(this::updateElementsWrapper);
+//        server.updateState();
+//    }
+//
+//    @Override
+//    protected void onDestroy() {
+//        super.onDestroy();
+//
+//        server.unregisterEventListener(this::updateElementsWrapper);
+//    }
+
     private void loadUserPreferences() {
         final boolean startOnBoot = UserPreferences.get(Preferences.START_ON_BOOT, false);
         switchStartOnBoot.setChecked(startOnBoot);
@@ -150,9 +172,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void registerEventListeners() {
-        server.setOnUpdateListener(() -> runOnUiThread(this::updateElements));
+        server.registerEventListener(this::updateElementsWrapper);
 
         UserPreferences.setOnPrefChangeCallback(this::onSharedPreferenceChange);
+    }
+
+    private void updateElementsWrapper() {
+        runOnUiThread(this::updateElements);
     }
 
     private void updateElements() {
@@ -187,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case UPDATING: {
                 btnUpdateInstallFrida.setEnabled(false);
-                btnUpdateInstallFrida.setText(String.format(getString(R.string.btn_download_progress), server.getDownloadState().getProgress()));
+                btnUpdateInstallFrida.setText(String.format(getString(R.string.btn_install_progress), server.getDownloadState().getProgress()));
             }
         }
     }
