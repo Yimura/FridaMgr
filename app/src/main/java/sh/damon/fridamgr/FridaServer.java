@@ -270,7 +270,7 @@ public class FridaServer {
     private boolean toggleUsap(boolean toggle) {
         // determine usap state
         ShellUtil.ProcessResponse res = ShellUtil.runAsSuperuser("getprop | grep usap | awk -F'[][]' '{print $2 \" \" $4}'");
-        if (res.isSuccess()) {
+        if (res.isSuccess() && !res.out.isEmpty()) {
             final String[] tmp = res.out.split(" ");
             final Pair<String, String> prop = new Pair<>(tmp[0], tmp[1]);
 
