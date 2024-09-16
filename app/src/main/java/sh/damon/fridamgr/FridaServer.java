@@ -139,7 +139,7 @@ public class FridaServer {
             if (!archive.delete()) {
                 Log.w("FridaServer", "Failed to remove Frida Server archive file.");
             }
-            return ShellUtil.runAsSuperuser(String.format("chmod +x %s", mBinary)).isSuccess();
+            return ShellUtil.runAsSuperuser(String.format("chmod 755 %s", mBinary)).isSuccess();
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
@@ -171,7 +171,7 @@ public class FridaServer {
         emit();
 
         final ShellUtil.ProcessResponse res =
-                ShellUtil.runAsSuperuser(String.format("pkill -15 %s; while pgrep %s 1>/dev/null; do sleep 0.1; done", mName, mName));
+                ShellUtil.runAsSuperuser(String.format("pkill -9 %s; while pgrep %s 1>/dev/null; do sleep 0.1; done", mName, mName));
         updateState();
         return res.isSuccess();
     }
