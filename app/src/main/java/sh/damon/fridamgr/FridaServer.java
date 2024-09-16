@@ -2,6 +2,8 @@ package sh.damon.fridamgr;
 
 import android.util.Log;
 
+import androidx.core.util.Pair;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -170,8 +172,25 @@ public class FridaServer {
         mState = State.STOPPING;
         emit();
 
+        // kill process cleanly
         final ShellUtil.ProcessResponse res =
-                ShellUtil.runAsSuperuser(String.format("pkill -9 %s; while pgrep %s 1>/dev/null; do sleep 0.1; done", mName, mName));
+                ShellUtil.runAsSuperuser(String.format("pkill -15 %s", mName));
+
+        // wait for process to exit
+        for (int i = 0; i < 150; ++i) {
+            if (ShellUtil.runAsSuperuser(String.format("pgrep %s 1>/dev/null && sleep 0.1", mName)).isFail()) {
+                break;
+            }
+        }
+
+        // die already!!!
+        if (ShellUtil.runAsSuperuser(String.format("pkill -9 %s", mName)).isSuccess()) {
+            Log.i("FridaServer", "Server process was still running, force killed it.");
+        }
+
+        // reset USAP state
+        toggleUsap(true);
+
         updateState();
         return res.isSuccess();
     }
@@ -191,6 +210,10 @@ public class FridaServer {
             cmdStr.append(" -l ").append(listenAddress.get());
         }
 
+        // disable USAP so Frida can attach properly
+        toggleUsap(false);
+
+        // launch program
         final ShellUtil.ProcessResponse res = ShellUtil.runAsSuperuser(cmdStr.toString());
 
         updateState();
@@ -236,6 +259,28 @@ public class FridaServer {
 
     public void unregisterEventListener(FridaServerCallback callback) {
         mCallbacks.remove(callback);
+    }
+
+    /**
+     * USAP is responsible for creating empty Zygote process, read to be used by applications.
+     * This may prevent Frida from properly starting remote processes.
+     * @param toggle True to enable USAP, false to disable.
+     * @return True on successful modification, false otherwise.
+     */
+    private boolean toggleUsap(boolean toggle) {
+        // determine usap state
+        ShellUtil.ProcessResponse res = ShellUtil.runAsSuperuser("getprop | grep usap | awk -F'[][]' '{print $2 \" \" $4}'");
+        if (res.isSuccess()) {
+            final String[] tmp = res.out.split(" ");
+            final Pair<String, String> prop = new Pair<>(tmp[0], tmp[1]);
+
+            Log.v("FridaServer", String.format("Found %s property, %s.", prop.first, toggle ? "enabling" : "disabling"));
+            res = ShellUtil.runAsSuperuser(String.format("setprop %s %s", prop.first, toggle ? "true" : "false"));
+
+            return res.isSuccess();
+        }
+
+        return false;
     }
 
     public void toggleListenPort(boolean toggle, int port) {
