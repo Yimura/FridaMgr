@@ -4,11 +4,13 @@ import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 import android.widget.Toast;
 
+import sh.damon.fridamgr.preferences.Preferences;
+import sh.damon.fridamgr.preferences.UserPreferences;
+
 public class FridaServerTileService extends TileService {
     private FridaServer server = null;
 
     public FridaServerTileService() {
-
     }
 
     // Called when the user adds your tile.
@@ -59,6 +61,10 @@ public class FridaServerTileService extends TileService {
 
         FridaServer.State state = server.getState();
         if (state == FridaServer.State.STOPPED) {
+            boolean listenOnNetwork = UserPreferences.get(Preferences.LISTEN_ON_NETWORK, false);
+            int portNumber = UserPreferences.get(Preferences.PORT_NUMBER, 27055);
+
+            server.toggleListenPort(listenOnNetwork, portNumber);
             server.start();
         }
         else if (state == FridaServer.State.RUNNING) {
@@ -76,6 +82,7 @@ public class FridaServerTileService extends TileService {
 
     private FridaServer getServer() {
         if (server == null) {
+            UserPreferences.load(getFilesDir());
             server = FridaServer.init(getFilesDir());
         }
         return server;

@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        UserPreferences.load(new File(getFilesDir(), "fridaMgr.json"));
+        UserPreferences.load(getFilesDir());
 
         server = FridaServer.init(getFilesDir());
 

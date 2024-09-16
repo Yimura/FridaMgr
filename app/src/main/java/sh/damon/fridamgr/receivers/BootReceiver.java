@@ -14,10 +14,14 @@ public class BootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
-            UserPreferences.load(new File(context.getFilesDir(), "fridaMgr.json"));
+            UserPreferences.load(context.getFilesDir());
             final FridaServer server = FridaServer.init(context.getFilesDir());
 
             if (UserPreferences.get(Preferences.START_ON_BOOT, false)) {
+                boolean listenOnNetwork = UserPreferences.get(Preferences.LISTEN_ON_NETWORK, false);
+                int portNumber = UserPreferences.get(Preferences.PORT_NUMBER, 27055);
+
+                server.toggleListenPort(listenOnNetwork, portNumber);
                 server.start();
             }
         }

@@ -16,6 +16,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class UserPreferences {
+    private static final String mFile = "fridaMgr.json";
+
     public interface UserPreferenceChangedCallback {
         void call(UserPreferences prefs, String key);
     }
@@ -45,8 +47,8 @@ public class UserPreferences {
     }
 
     private static File mSaveFile;
-    public static void load(File saveFile) {
-        mSaveFile = saveFile;
+    public static void load(File directory) {
+        mSaveFile = new File(directory, mFile);
 
         if (!mSaveFile.exists()) {
             mInstance = new UserPreferences();
@@ -57,7 +59,7 @@ public class UserPreferences {
         final Gson gson = new Gson();
         final JsonReader jsonReader;
         try {
-            jsonReader = new JsonReader(new FileReader(saveFile));
+            jsonReader = new JsonReader(new FileReader(mSaveFile));
 
             if (mInstance != null ){
                 Log.w("UserPreferences", "UserPreference object has already been instantiated, double call to load?");
