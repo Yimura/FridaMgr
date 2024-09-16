@@ -60,7 +60,9 @@ public class UserPreferences {
             jsonReader = new JsonReader(new FileReader(saveFile));
 
             if (mInstance != null ){
-                throw new RuntimeException("UserPreference object has already been instantiated, double call to load?");
+                Log.w("UserPreferences", "UserPreference object has already been instantiated, double call to load?");
+
+                return;
             }
             mInstance = gson.fromJson(jsonReader, UserPreferences.class);
         } catch (FileNotFoundException e) {
