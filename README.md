@@ -1,4 +1,12 @@
-# Frida Manager
+<p align="center">
+  <img align="center" src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp" alt="Frida Mgr Logo"/>
+</p>
+
+<p align="center">
+  <img alt="Github Release" src="https://img.shields.io/github/v/release/Yimura/FridaMgr">
+  <img alt="Android Version" src="https://img.shields.io/badge/Android_Version-10%2B-blue?logo=android">
+  <img alt="Release Build" src="https://github.com/Yimura/FridaMgr/actions/workflows/release.yml/badge.svg">
+</p>
 
 Frida Manager is an Android Application made to make the installation and management of the frida-server binary.
 
