@@ -89,6 +89,8 @@ public class FridaServer {
     private final DownloadState mDownloadState = new DownloadState();
     private State mState = State.UNKNOWN;
 
+    private int mPid = -1;
+
     public FridaServer(File baseDir) {
         mName = "frida-server";
         mBinary = new File(baseDir, mName);
@@ -309,7 +311,7 @@ public class FridaServer {
         try {
             if (ShellUtil.runAsSuperuser(String.format("test -e %s", mBinary)).isFail()) {
                 mState = State.NOT_INSTALLED;
-
+                mPid = -1;
                 return;
             }
 
@@ -318,16 +320,24 @@ public class FridaServer {
             final ShellUtil.ProcessResponse res = ShellUtil.runAsSuperuser(String.format("pgrep %s", mName));
             if (res.isFail()) {
                 mState = State.STOPPED;
+                mPid = -1;
             }
             else {
                 mState = State.RUNNING;
+                try {
+                    mPid = Integer.parseInt(res.out.trim());
+                } catch (NumberFormatException e) {
+                    mPid = -1;
+                }
             }
-        }
-        finally {
+        } finally {
             emit();
         }
     }
 
+    public int getPid() {
+        return mPid;
+    }
 
     private static FridaServer instance = null;
     public static FridaServer init(File baseDir) {
