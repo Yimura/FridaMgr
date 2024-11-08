@@ -15,10 +15,10 @@
         android:text="@string/frida_version"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_toggle_server"
-        app:layout_constraintVertical_bias="0.98" />
-
+        app:layout_constraintVertical_bias="0.82" />
 
     <Button
         android:id="@+id/btn_install_update_server"
@@ -51,6 +51,7 @@
         android:layout_width="260dp"
         android:layout_height="48dp"
         android:text="@string/start_on_boot"
+        android:textColor="@color/text_color"
         app:layout_constraintBottom_toTopOf="@+id/frida_version"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -64,6 +65,7 @@
         android:layout_width="260dp"
         android:layout_height="48dp"
         android:text="@string/listen_on_network_interface"
+        android:textColor="@color/text_color"
         app:layout_constraintBottom_toTopOf="@+id/frida_version"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -98,12 +100,14 @@
         app:layout_constraintTop_toBottomOf="@+id/switch_listen_on_network"
         app:layout_constraintVertical_bias="0.032">
 
+
     </com.google.android.material.textfield.TextInputEditText>
 
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="154dp"
         android:layout_height="130dp"
+        android:contentDescription="@string/main_logo"
         app:layout_constraintBottom_toTopOf="@+id/frida_server_state"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"

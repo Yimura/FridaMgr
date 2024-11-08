@@ -1,6 +1,11 @@
 <resources>
     <!-- Optional: You can leave this empty or match the light theme -->
     <style name="Base.Theme.FridaManager" parent="Theme.Material3.Light.NoActionBar">
-        <item name="android:forceDarkAllowed">false</item>
+        <item name="android:windowBackground">@color/dark_background</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorSecondary">@color/white</item>
+        <item name="android:textColorTertiary">@color/white</item>
+        <item name="android:textColorHint">@color/white_50_percent</item>
     </style>
 </resources>
