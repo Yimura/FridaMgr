@@ -25,4 +25,7 @@
     <string name="port_number_hint">Port Number</string>
 
     <string name="tile_toggle_server">Toggle Frida</string>
+    <string name="main_logo">Logo</string>
+    <string name="frida_server_pid">Server PID: <b>%s</b></string>
+    <string name="not_running">None</string>
 </resources>
