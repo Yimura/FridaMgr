@@ -58,9 +58,11 @@ frida -H 192.168.88.7:27055 -f sh.damon.fridamgr
 ## Images
 
 - Before installing Frida Server
+
   ![Frida Mgr Installation Screen](docs/imgs/install_screen.png)
 
 - When Frida Server is installed and running
+
   ![Frida Mgr Post-Installation Screen](docs/imgs/post_install_screen.png)
 
 ## Tested Devices
