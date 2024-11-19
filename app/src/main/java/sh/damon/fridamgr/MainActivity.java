@@ -185,6 +185,13 @@ public class MainActivity extends AppCompatActivity {
         fridaStateLbl.setText(String.format(getString(R.string.frida_server_state_label), getString(server.getStateStringId())));
         fridaVersionLbl.setText(String.format(getString(R.string.frida_version), server.getVersion()));
 
+        TextView fridaPidLbl = findViewById(R.id.frida_pid);
+        if (server.getState() == FridaServer.State.RUNNING && server.getPid() != -1) {
+            fridaPidLbl.setText(String.format(getString(R.string.frida_server_pid), String.valueOf(server.getPid())));
+        } else {
+            fridaPidLbl.setText(String.format(getString(R.string.frida_server_pid), getString(R.string.not_running)));
+        }
+
         btnUpdateInstallFrida.setEnabled(true);
         btnServerStateSwitch.setEnabled(true);
         btnUpdateInstallFrida.setText(R.string.btn_update_frida);
