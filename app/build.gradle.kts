@@ -12,6 +12,14 @@ android {
             keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
         }
     }
+
+    applicationVariants.all {
+        outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            output.outputFileName = "FridaManager.apk"
+        }
+    }
+
     namespace = "sh.damon.fridamgr"
     compileSdk = 34
 
@@ -19,8 +27,8 @@ android {
         applicationId = "sh.damon.fridamgr"
         minSdk = 29
         targetSdk = 34
-        versionCode = 4
-        versionName = "0.1.3"
+        versionCode = 5
+        versionName = "0.1.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -35,6 +43,7 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
