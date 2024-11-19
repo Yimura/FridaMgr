@@ -57,10 +57,6 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: ./gradlew bundleRelease --stacktrace
 
-      - name: Get release file aab path
-        id: releaseAab
-        run: echo "aabfile=$(find app/build/outputs/bundle/release/*.aab)" >> $GITHUB_OUTPUT
-
       - name: Get release file apk path
         id: releaseApk
         run: echo "apkfile=$(find app/build/outputs/apk/release/*.apk)" >> $GITHUB_OUTPUT
@@ -70,7 +66,6 @@ jobs:
         with:
           files: |
             ${{ steps.releaseApk.outputs.apkfile }}
-            ${{ steps.releaseAab.outputs.aabfile }}
           draft: true
           prerelease: true
           generate_release_notes: true
