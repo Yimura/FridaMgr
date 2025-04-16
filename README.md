@@ -8,7 +8,7 @@
   <img alt="Release Build" src="https://github.com/Yimura/FridaMgr/actions/workflows/release.yml/badge.svg">
 </p>
 
-Frida Manager is an Android Application made to make the installation and management of the frida-server binary.
+Frida Manager is an Android Application made to make the installation and management of the frida-server binary easier.
 
 - [Functionality](#functionality)
 - [How To Use](#how-to-use)
